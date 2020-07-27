@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Babylon Template</title>
+        <link rel="icon" href="data:," />
+
+        <style>
+            html,
+            body {
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            h1,
+            h3 {
+                margin: 10px;
+                text-align: center;
+            }
+
+            #renderCanvas {
+                margin: 0 auto;
+                justify-content: center;
+                align-items: center;
+                width: 80%;
+                height: 80%;
+                touch-action: none;
+                margin-bottom: 20px;
+            }
+            button {
+                align-content: center;
+                margin: 0 auto;
+
+                width: 20%;
+                height: 30px;
+            }
+        </style>
+        <script src="./babylon.js"></script>
+        <script src="./babylonjs.loaders.min.js"></script>
+        <script src="./pep.js"></script>
+    </head>
+
+    <body>
+        <h1>Babylon testing</h1>
+        <h3>use WSADQE + mouse for camera movements</h3>
+
+        <canvas id="renderCanvas" touch-action="none"></canvas>
+        <button onclick="StartAni1()">Start 1</button>
+        <button onclick="StartAni2()">Start 2</button>
+        <!-- touch-action="none" for best results from PEP -->
+
+        <script>
+            let canvas = document.getElementById("renderCanvas") // Get the canvas element
+            let engine = new BABYLON.Engine(canvas, true) // Generate the BABYLON 3D engine
+            let animations
+
+            /******* Add the create scene function ******/
+            let createScene = function () {
+                // Create the scene space
+                let scene = new BABYLON.Scene(engine)
+
+                BABYLON.SceneLoader.LoadAssetContainer("./", "IRB6640.glb", scene, function (container) {
+                    animations = container.animationGroups
+                    animations[0].stop() // If not stopped it will start automatically when loaded.
+
+                    // Set alwaysSelectAsActiveMesh to true, this stops the Cube from flickering during camera or animation movements.
+                    container.meshes[1].alwaysSelectAsActiveMesh = true
+
+                    container.addAllToScene()
+                })
+
+                let camera = new BABYLON.FlyCamera("FlyCamera", new BABYLON.Vector3(0, 2, -10), scene)
+
+                // Targets the camera to a particular position. In this case the scene origin
+                camera.setTarget(new BABYLON.Vector3(0, 1, 0))
+
+                // Airplane like rotation, with faster roll correction and banked-turns.
+                // Default is 100. A higher number means slower correction.
+                camera.rollCorrect = 5000
+                // Default is false.
+                camera.bankedTurn = false
+                // Defaults to 90° in radians in how far banking will roll the camera.
+                camera.bankedTurnLimit = 0
+                // How much of the Yawing (turning) will affect the Rolling (banked-turn.)
+                // Less than 1 will reduce the Rolling, and more than 1 will increase it.
+                camera.bankedTurnMultiplier = 0
+
+                camera.inversRotationSpeed = 1
+                camera.speed = 0.3
+
+                // This attaches the camera to the canvas
+                camera.attachControl(canvas, true)
+
+                // Add lights to the scene
+                let light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 5, 5), scene)
+
+                scene.ambientColor = new BABYLON.Color3(1, 1, 1)
+
+                return scene
+            }
+            /******* End of the create scene function ******/
+
+            let scene = createScene() //Call the createScene function
+
+            // Register a render loop to repeatedly render the scene
+            engine.runRenderLoop(function () {
+                scene.render()
+            })
+
+            function StartAni1() {
+                animations[0].start()
+            }
+            function StartAni2() {
+                animations[1].start()
+            }
+
+            // Watch for browser/canvas resize events
+            window.addEventListener("resize", function () {
+                engine.resize()
+            })
+        </script>
+    </body>
+</html>
